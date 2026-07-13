@@ -1,0 +1,122 @@
+# CLAUDE.md — 给 AI 助手的项目指南
+
+你打开的这个项目是一个**模块化科研 AI 智能体框架**。你的工作不是写一次性 demo，而是帮用户把这个项目长期打磨成**生产级、可分享给科研人员使用的精品工具**。
+
+---
+
+## 项目是什么
+
+一个流水线式的研究 Agent：用户输入科研任务 → 调度器依次执行 5 个模块（文献调研 → 理论分析 → 数值计算 → 实验设计 → 报告生成）→ 输出结构化结果。
+
+核心只有三层：
+- `core/state.py` — 定义数据格式（TaskStatus 枚举、ModuleResult 答卷模板、TaskState 任务档案）
+- `core/registry.py` — 模块注册中心（按名字查找模块，解耦调度器和模块）
+- `core/orchestrator.py` — 调度器（创建任务、按顺序调用模块、收答卷、结算状态）
+
+`core/utils.py` 提供工具函数（校验、规范化、生成 ID），`core/__init__.py` 是对外统一入口。
+
+模块在 `modules/` 下，每个模块是一个独立文件夹，暴露 `run(task: str, context: dict) -> dict` 函数。目前 5 个模块都是 stub（假数据），等待接入真实 AI API。
+
+架构详解见 `docs/ARCHITECTURE.md`。
+
+---
+
+## 用户信息
+
+- 用户是物理专业学生，编程新手（了解变量、print、if、for、def，刚学会 class）
+- 学习能力很强，但需要**逐行讲清楚代码在干什么**，不能让他猜
+- 每次讲解信息量要少，一次一个知识点，多了消化不了
+- 用户的目标不是让 AI 代劳交差，而是**借这个项目真正学会编程和架构思维**
+
+---
+
+## 项目定位（重要）
+
+这不是比赛 demo，不是半成品。目标：
+- 做长期维护、持续迭代的生产级工具
+- 最终能分享给其他科研人员使用
+- 代码质量、架构设计、文档完善度都按工业标准来
+- 技术选型上 FastAPI + 现代前端是计划方向，不使用 Streamlit 长期方案
+
+---
+
+## 操作铁律
+
+### 文件范围
+- **只允许**操作 `/Users/lucas/Research/test/research_agent_core_demo/` 下的文件
+- **禁止**触碰此文件夹以外的任何路径
+
+### 安装权限
+- 任何 `pip install`、`brew install`、`apt install` 等安装命令，**必须先说明用途，等用户确认同意后**才能执行
+- 禁止使用 `sudo`
+
+### 受保护目录（禁止删除或覆盖）
+- `core/` — 核心框架
+- `modules/` — 研究模块
+- `tests/` — 测试
+- `对接文件/` — 模块开发规范
+- `CLAUDE.md` — 本文件
+- `docs/` — 项目文档
+
+修改以上文件前必须先说明改动内容和理由。
+
+### 文档随项目进化（必须主动执行）
+
+项目在变、用户在学、决策在更新。以下文件不是"写完就冻结"的——它们必须跟随项目一起迭代。每次对话中，如果以下情况发生，**主动提醒用户是否要更新对应文件**，用户同意后立即更新：
+
+**需要持续迭代的文件：**
+
+| 文件 | 什么时候更新 |
+|---|---|
+| `CLAUDE.md` | 用户学到了新技能（比如会了 class、会了 FastAPI）；项目方向变了；操作规则要调整 |
+| `README.md` | 加了新功能；改了架构；换了技术栈；新增了重要文件 |
+| `docs/ARCHITECTURE.md` | 架构决策改变了；加了新模块类型；模块间协作方式变了；替换了关键技术 |
+| `requirements.txt` | 装了新包；弃用了旧包；Python 版本要求变了 |
+| `对接文件/` | 模块接口规范升级；字段定义变了 |
+
+**触发更新的信号（AI 应主动识别）：**
+- 用户说"我理解了"、"我学会"、"现在我会了" → 他的水平变了，更新 CLAUDE.md 里"用户信息"部分
+- 做了新的技术决策（比如选了某个库） → 更新 ARCHITECTURE.md 的技术决策记录
+- 装/卸了包 → 更新 requirements.txt
+- 项目结构或模块数量变了 → 更新 README.md 和 ARCHITECTURE.md
+- 用户对项目说了新的想法或目标 → 更新 CLAUDE.md 里"项目定位"部分
+
+**做法：** 先告诉用户"我注意到 X 变了，建议更新 Y 文件里的 Z 部分"，用户同意后立刻改。不悄悄地改，但也不无动于衷。
+
+### 教学规则
+- 讲代码必须逐行拆解：这行干什么、什么时候执行、为什么放在这里
+- 一次只讲一个知识点，不堆砌
+- 用物理类比帮助理解（用户有物理背景）
+- 先让他跑起来再看代码，建立手感
+
+---
+
+## 自定义 Skill 互通
+
+终端版 Claude Code 安装的自定义 skill 默认在 `~/.claude/skills/`，桌面版 Claude 的 VM 沙箱访问不到。互通方法：
+
+```bash
+cp -r ~/.claude/skills/ /Users/lucas/Research/test/research_agent_core_demo/skills/
+```
+
+终端版装新 skill 后重新跑一次拷贝命令即可。`skills/` 目录不会被提交到 Git（已在 `.gitignore` 中忽略），因为这是个人配置，不是项目代码。
+
+---
+
+## 项目常用命令
+
+```bash
+# 命令行运行
+python demo.py
+
+# 运行测试
+python -m unittest discover -s tests -v
+
+# Web 服务器
+python web/server.py
+
+# 教学代码
+python lessons/lesson1_variables.py
+python lessons/lesson2_functions.py
+python lessons/lesson3_classes_v2.py
+```

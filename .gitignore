@@ -1,0 +1,35 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 环境变量（含密钥，绝对不能提交）
+.env
+*.env
+
+# 输出文件
+outputs/
+*.log
+
+# 个人 Skill 拷贝（从 ~/.claude/skills 拷过来的，不提交）
+skills/
+
+# 打包文件
+dist/
+build/
+*.egg-info/

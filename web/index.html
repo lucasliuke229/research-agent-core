@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Agent Core</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-page:       #F7F8FB;
+    --text-primary:  #1B1E2B;
+    --text-secondary:#5B6170;
+    --text-muted:    #9299A8;
+    --accent:        #2F4A8A;
+    --accent-hover:  #3D7ABF;
+    --accent-subtle: #EBEFF7;
+    --surface:       #EDEFF5;
+    --surface-hover: #E2E6EE;
+    --white:         #FFFFFF;
+    --success:       #1DA88A;
+    --error:         #D94A4F;
+    --warning:       #EC9A23;
+    --border:        #DCE0E8;
+    --radius-sm:     6px;
+    --radius-md:     10px;
+    --radius-lg:     16px;
+    --shadow-sm:     0 1px 3px rgba(27,30,43,0.06);
+    --shadow-md:     0 4px 16px rgba(27,30,43,0.08);
+    --transition:    200ms ease;
+  }
+
+  html { font-size: 16px; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .header p {
+    font-size: 0.925rem;
+    color: var(--text-secondary);
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── Form elements ── */
+  .field { margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 14px 16px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    resize: vertical;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+  }
+  textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+  }
+  textarea::placeholder { color: var(--text-muted); }
+
+  /* ── Segmented control (task type picker) ── */
+  .segmented {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    flex-wrap: wrap;
+  }
+  .segmented button {
+    flex: 1;
+    min-width: 70px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  .segmented button:hover { color: var(--text-primary); background: var(--surface-hover); }
+  .segmented button.selected {
+    color: var(--accent);
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+  }
+
+  /* ── Primary button ── */
+  .btn-run {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    font-weight: 600;
+    color: #FFF;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition), transform var(--transition);
+    margin-top: 20px;
+  }
+  .btn-run:hover { background: #263D70; }
+  .btn-run:active { transform: scale(0.98); }
+  .btn-run:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Pipeline visualization (signature element) ── */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 8px 0 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .pipeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 72px;
+  }
+
+  .pipeline-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: all 400ms ease;
+  }
+  .pipeline-dot.running {
+    background: var(--accent-subtle);
+    border-color: var(--accent);
+    color: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .pipeline-dot.success {
+    background: #E6F8F4;
+    border-color: var(--success);
+    color: var(--success);
+  }
+  .pipeline-dot.failed {
+    background: #FDE8E9;
+    border-color: var(--error);
+    color: var(--error);
+  }
+
+  .pipeline-name {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.3;
+    transition: color 400ms ease;
+  }
+  .pipeline-name.active { color: var(--accent); font-weight: 600; }
+  .pipeline-name.done { color: var(--text-secondary); }
+
+  .pipeline-connector {
+    width: 28px;
+    height: 2px;
+    background: var(--border);
+    margin: 0 4px;
+    margin-bottom: 24px;
+    border-radius: 1px;
+    transition: background 400ms ease;
+  }
+  .pipeline-connector.flow {
+    background: var(--accent);
+    animation: flowPulse 800ms ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(47,74,138,0.2); }
+    50%      { box-shadow: 0 0 0 8px rgba(47,74,138,0); }
+  }
+  @keyframes flowPulse {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+
+  /* ── Results area ── */
+  .results-section { display: none; }
+  .results-section.visible { display: block; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .status-badge.success { background: #E6F8F4; color: var(--success); }
+  .status-badge.failed  { background: #FDE8E9; color: var(--error); }
+  .status-badge.partial { background: #FDF1DE; color: var(--warning); }
+  .status-badge.running { background: var(--accent-subtle); color: var(--accent); }
+
+  .result-module {
+    border-left: 3px solid var(--border);
+    padding-left: 16px;
+    margin-top: 16px;
+  }
+  .result-module h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .result-module p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  /* ── Error display ── */
+  .error-box {
+    background: #FDE8E9;
+    border: 1px solid var(--error);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin-top: 16px;
+    font-size: 0.875rem;
+    color: var(--error);
+  }
+
+  /* ── Logs ── */
+  .logs-box {
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin-top: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #FFF;
+    border-radius: 50%;
+    animation: spin 600ms linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 48px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .container { padding: 24px 16px 60px; }
+    .card { padding: 20px; }
+    .header h1 { font-size: 1.4rem; }
+    .segmented { gap: 2px; }
+    .segmented button { font-size: 0.75rem; padding: 6px 8px; }
+    .pipeline-node { min-width: 52px; }
+    .pipeline-dot { width: 28px; height: 28px; font-size: 0.65rem; }
+    .pipeline-connector { width: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pipeline-dot.running { animation: none; }
+    .pipeline-connector.flow { animation: none; }
+    .spinner { animation: none; }
+  }
+
+  /* ── Keyboard focus ── */
+  textarea:focus-visible,
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header class="header">
+    <h1>Research Agent Core</h1>
+    <p>模块化科研智能体 &middot; 输入研究问题，流水线自动执行文献调研、理论分析、数值计算、实验设计与报告汇总</p>
+  </header>
+
+  <!-- Input card -->
+  <section class="card" id="input-card">
+    <div class="field">
+      <label class="label" for="task-input">研究任务</label>
+      <textarea
+        id="task-input"
+        placeholder="例如：研究剪切增稠流体在复杂冲击加载下的堵塞相变"
+      >研究剪切增稠流体在复杂冲击加载下的堵塞相变</textarea>
+    </div>
+
+    <div class="field">
+      <label class="label">任务类型</label>
+      <div class="segmented" id="task-type-group">
+        <button data-type="full" class="selected">完整流水线</button>
+        <button data-type="literature">文献调研</button>
+        <button data-type="theory">理论分析</button>
+        <button data-type="computation">数值计算</button>
+        <button data-type="experiment">实验设计</button>
+      </div>
+    </div>
+
+    <button class="btn-run" id="btn-run" onclick="runTask()">
+      开始运行
+    </button>
+  </section>
+
+  <!-- Pipeline visualization (hidden until run) -->
+  <section class="card" id="pipeline-card" style="display:none;">
+    <div class="pipeline" id="pipeline">
+      <!-- JS fills this -->
+    </div>
+  </section>
+
+  <!-- Results (hidden until done) -->
+  <section class="card results-section" id="results-section">
+    <div id="results-content"></div>
+  </section>
+
+  <footer class="footer">
+    Research Agent Core &middot; MIT License
+  </footer>
+</div>
+
+<script>
+// ── Module definitions ──
+const MODULES = [
+  { id: "literature",  name: "文献调研" },
+  { id: "theory",      name: "理论分析" },
+  { id: "computation", name: "数值计算" },
+  { id: "experiment",  name: "实验设计" },
+  { id: "report",      name: "报告汇总" },
+];
+
+// ── Segmented control ──
+document.getElementById("task-type-group").addEventListener("click", (e) => {
+  if (e.target.tagName !== "BUTTON") return;
+  document.querySelectorAll("#task-type-group button").forEach(b => b.classList.remove("selected"));
+  e.target.classList.add("selected");
+});
+
+// ── Enter to submit ──
+document.getElementById("task-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    runTask();
+  }
+});
+
+// ── Pipeline rendering ──
+function buildPipeline() {
+  const container = document.getElementById("pipeline");
+  container.innerHTML = "";
+  MODULES.forEach((mod, i) => {
+    // connector (before each node except first)
+    if (i > 0) {
+      const conn = document.createElement("span");
+      conn.className = "pipeline-connector";
+      conn.dataset.connector = mod.id;
+      container.appendChild(conn);
+    }
+
+    // node
+    const node = document.createElement("div");
+    node.className = "pipeline-node";
+    node.innerHTML = `
+      <div class="pipeline-dot" data-dot="${mod.id}">${i + 1}</div>
+      <span class="pipeline-name" data-name="${mod.id}">${mod.name}</span>
+    `;
+    container.appendChild(node);
+  });
+}
+
+function updatePipeline(results) {
+  // results is an array of { module, status, ... } from the backend
+  results.forEach((r, idx) => {
+    const modId = MODULES[idx]?.id;
+    if (!modId) return;
+
+    const dot = document.querySelector(`.pipeline-dot[data-dot="${modId}"]`);
+    const nameEl = document.querySelector(`.pipeline-name[data-name="${modId}"]`);
+    const conn = document.querySelector(`.pipeline-connector[data-connector="${modId}"]`);
+
+    // Dot status
+    if (dot) {
+      dot.classList.remove("running", "success", "failed");
+      if (r.status === "success") {
+        dot.classList.add("success");
+        dot.textContent = "✓";
+      } else if (r.status === "failed") {
+        dot.classList.add("failed");
+        dot.textContent = "✗";
+      } else {
+        dot.classList.add("running");
+      }
+    }
+
+    // Name status
+    if (nameEl) {
+      nameEl.classList.remove("active", "done");
+      if (r.status === "success" || r.status === "failed") {
+        nameEl.classList.add("done");
+      } else {
+        nameEl.classList.add("active");
+      }
+    }
+
+    // Connector flow
+    if (conn) {
+      if (r.status === "success") {
+        conn.classList.add("flow");
+      }
+    }
+  });
+}
+
+function setPipelineRunning(modIdx) {
+  // Mark module at modIdx as running, previous as done
+  MODULES.forEach((mod, i) => {
+    const dot = document.querySelector(`.pipeline-dot[data-dot="${mod.id}"]`);
+    const nameEl = document.querySelector(`.pipeline-name[data-name="${mod.id}"]`);
+    const conn = document.querySelector(`.pipeline-connector[data-connector="${mod.id}"]`);
+
+    if (i < modIdx) {
+      // Already done
+      if (dot) { dot.classList.remove("running"); dot.classList.add("success"); dot.textContent = "✓"; }
+      if (nameEl) { nameEl.classList.remove("active"); nameEl.classList.add("done"); }
+      if (conn) { conn.classList.add("flow"); }
+    } else if (i === modIdx) {
+      // Currently running
+      if (dot) { dot.classList.add("running"); }
+      if (nameEl) { nameEl.classList.add("active"); }
+    }
+    // Later modules stay default
+  });
+}
+
+// ── Run task ──
+async function runTask() {
+  const taskInput = document.getElementById("task-input");
+  const btn = document.getElementById("btn-run");
+  const task = taskInput.value.trim();
+
+  if (!task) {
+    taskInput.focus();
+    return;
+  }
+
+  // Get selected task type
+  const selectedBtn = document.querySelector("#task-type-group button.selected");
+  const taskType = selectedBtn ? selectedBtn.dataset.type : "full";
+
+  // Show pipeline, hide previous results
+  const pipelineCard = document.getElementById("pipeline-card");
+  const resultsSection = document.getElementById("results-section");
+  pipelineCard.style.display = "block";
+  resultsSection.classList.remove("visible");
+  document.getElementById("results-content").innerHTML = "";
+
+  // Build pipeline if not built
+  buildPipeline();
+
+  // UI: running state
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 运行中...';
+
+  // Simulate pipeline progress for visual feedback
+  const pipelineMods = taskType === "full"
+    ? MODULES.map(m => m.id)
+    : [taskType];
+  let simIdx = 0;
+  const simInterval = setInterval(() => {
+    if (simIdx < pipelineMods.length) {
+      setPipelineRunning(simIdx);
+      simIdx++;
+    }
+  }, 400);
+
+  try {
+    const response = await fetch("/api/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task, task_type: taskType }),
+    });
+
+    clearInterval(simInterval);
+
+    if (!response.ok) {
+      throw new Error(`服务器返回错误 ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Update pipeline with real results
+    if (data.results && data.results.length > 0) {
+      updatePipeline(data.results.map(r => ({ status: r.status })));
+    }
+
+    // Render results
+    renderResults(data);
+
+  } catch (err) {
+    clearInterval(simInterval);
+    renderError(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "开始运行";
+  }
+}
+
+// ── Render results ──
+function renderResults(data) {
+  const section = document.getElementById("results-section");
+  const container = document.getElementById("results-content");
+  section.classList.add("visible");
+
+  let badgeClass = data.status === "success" ? "success"
+    : data.status === "partial" ? "partial"
+    : data.status === "failed" ? "failed" : "running";
+
+  let html = "";
+
+  // Status + summary
+  html += `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <span class="status-badge ${badgeClass}">${data.status}</span>
+      <span style="font-size:0.875rem;color:var(--text-secondary);">任务 ID: ${data.task_id}</span>
+    </div>
+    <p style="font-size:0.95rem;font-weight:500;margin-bottom:12px;white-space:pre-line;">${escapeHtml(data.summary)}</p>
+  `;
+
+  // Error
+  if (data.error) {
+    html += `<div class="error-box">${escapeHtml(data.error)}</div>`;
+  }
+
+  // Per-module results
+  if (data.results && data.results.length > 0) {
+    html += `<h3 style="font-size:0.85rem;font-weight:600;color:var(--text-secondary);margin-top:20px;margin-bottom:8px;">模块结果</h3>`;
+    data.results.forEach(r => {
+      const s = r.status === "success" ? "✓" : r.status === "failed" ? "✗" : "⋯";
+      html += `
+        <div class="result-module">
+          <h4>${s} ${escapeHtml(r.module || "")}</h4>
+          <p>${escapeHtml(r.summary || "")}</p>
+          ${r.error ? `<p style="color:var(--error);font-size:0.8rem;">${escapeHtml(r.error)}</p>` : ""}
+        </div>
+      `;
+    });
+  }
+
+  // Logs
+  if (data.logs && data.logs.length > 0) {
+    html += `<h3 style="font-size:0.85rem;font-weight:600;color:var(--text-secondary);margin-top:20px;margin-bottom:8px;">日志</h3>`;
+    html += `<div class="logs-box">${data.logs.map(l => escapeHtml(l)).join("<br>")}</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderError(message) {
+  const section = document.getElementById("results-section");
+  const container = document.getElementById("results-content");
+  section.classList.add("visible");
+  container.innerHTML = `<div class="error-box">运行失败：${escapeHtml(message)}</div>`;
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Init ──
+buildPipeline();
+</script>
+</body>
+</html>

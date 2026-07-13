@@ -1,0 +1,12 @@
+# Research Agent Core — 依赖列表
+# 安装：pip install -r requirements.txt
+
+# --- 核心依赖（Python 标准库，无需额外安装）---
+# dataclasses, enum, importlib, uuid, datetime, copy, typing, pathlib
+
+# --- Web 框架 ---
+fastapi>=0.115.0
+uvicorn>=0.30.0
+
+# --- 数据库（计划中，暂未启用）---
+# sqlite3 是 Python 标准库，无需安装
