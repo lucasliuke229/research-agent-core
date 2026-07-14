@@ -1,0 +1,14 @@
+# 核心文件由队长审核
+# 队友改 core/、文档、根目录文件时，GitHub 自动要求 lucasliuke229 审批
+core/       @lucasliuke229
+对接文件/     @lucasliuke229
+docs/       @lucasliuke229
+tests/      @lucasliuke229
+web/        @lucasliuke229
+CLAUDE.md   @lucasliuke229
+README.md   @lucasliuke229
+requirements.txt @lucasliuke229
+.env.example @lucasliuke229
+LICENSE     @lucasliuke229
+.gitignore  @lucasliuke229
+.github/    @lucasliuke229

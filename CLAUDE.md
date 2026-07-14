@@ -47,9 +47,22 @@
 
 ## 操作铁律
 
+### 角色识别（所有 AI 助手必须先看这里）
+
+本项目有两类协作者，权限不同。打开项目后先通过"用户信息"区域判断当前用户身份：
+
+- **队长（lucas）** — 用户信息里写的是"物理专业学生"，项目所有者。可以修改所有文件。
+- **模块开发者（队友）** — 用户信息里写的是自己的背景。**只允许操作 `modules/<你的模块>/` 目录。**
+
+如果你是模块开发者的 AI 助手，你必须遵守：
+- **只读** `core/`、`对接文件/`、`docs/`、`tests/`、`web/`
+- **只写** `modules/<你的模块>/`
+- **禁止**修改根目录的任何文件（CLAUDE.md、README.md、requirements.txt、.env.example 等）
+- 如果需要改公共文件（比如在 registry.py 里注册新模块），先告诉你的人类，让他跟队长沟通
+
 ### 文件范围
-- **只允许**操作 `/Users/lucas/Research/test/research_agent_core_demo/` 下的文件
-- **禁止**触碰此文件夹以外的任何路径
+- **只允许**操作本项目文件夹内的文件（以 `CLAUDE.md` 所在目录为根目录）
+- **禁止**触碰本项目文件夹以外的任何路径
 
 ### 安装权限
 - 任何 `pip install`、`brew install`、`apt install` 等安装命令，**必须先说明用途，等用户确认同意后**才能执行
@@ -101,7 +114,7 @@
 终端版 Claude Code 安装的自定义 skill 默认在 `~/.claude/skills/`，桌面版 Claude 的 VM 沙箱访问不到。互通方法：
 
 ```bash
-cp -r ~/.claude/skills/ /Users/lucas/Research/test/research_agent_core_demo/skills/
+cp -r ~/.claude/skills/ 项目根目录/skills/
 ```
 
 终端版装新 skill 后重新跑一次拷贝命令即可。`skills/` 目录不会被提交到 Git（已在 `.gitignore` 中忽略），因为这是个人配置，不是项目代码。
