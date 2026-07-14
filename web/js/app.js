@@ -48,6 +48,18 @@ window.RA.App = (function() {
     composer.setRunMode('full');
     execPlan.render(Adapter.buildExecPlan('', Adapter.moduleList().map(function(m){return m.id})));
     renderSidebar();
+    loadServerConfig();
+  }
+
+  /* ── Server Config ───────────────────────────────────────────────── */
+  var serverConfig = {};
+
+  async function loadServerConfig() {
+    try {
+      var resp = await fetch('/api/config');
+      serverConfig = await resp.json();
+      inspector.clear(serverConfig); // show server model in right panel
+    } catch(e) { serverConfig = {}; }
   }
 
   /* ── Run Mode ─────────────────────────────────────────────────────── */

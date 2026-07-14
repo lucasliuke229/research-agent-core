@@ -414,11 +414,19 @@ window.RA.Components = (function() {
         '</div>'+
       '</div>';
   };
-  RunInspector.prototype.clear = function() {
+  RunInspector.prototype.clear = function(config) {
+    config = config || {};
+    var modelLine = config.model || '';
+    if (config.base_url) modelLine += ' @ ' + config.base_url.replace(/^https?:\/\//,'');
+    var apiStatus = config.has_api_key ? '<span style="color:var(--success)">已配置</span>' : '<span style="color:var(--error)">未设置</span>';
     var el = document.getElementById('inspector-content');
     if (!el) return;
     el.innerHTML =
       '<div class="inspect-section"><div class="inspect-label">运行状态</div><span class="status-pill pending">就绪</span></div>'+
+      '<div class="inspect-section"><div class="inspect-label">当前配置</div>'+
+        '<div class="inspect-row"><span class="key">模型</span><span class="val text-sm">'+escapeHtml(modelLine||'—')+'</span></div>'+
+        '<div class="inspect-row"><span class="key">API Key</span><span class="val text-xs">'+apiStatus+'</span></div>'+
+      '</div>'+
       '<div class="inspect-section"><div class="inspect-label">任务信息</div><p class="text-sm" style="color:var(--text-muted)">尚未运行任务</p></div>'+
       '<div class="inspect-section"><div class="inspect-label">快捷操作</div>'+
         '<div class="inspect-actions">'+
@@ -582,11 +590,28 @@ window.RA.Components = (function() {
   };
 
   SettingsPanel.prototype.open = function() {
-    // Populate fields from localStorage or current config
-    var saved = this._loadStored();
-    if (saved.model) document.getElementById('settings-model').value = saved.model;
-    if (saved.base_url) document.getElementById('settings-base-url').value = saved.base_url;
-    if (saved.api_key) document.getElementById('settings-api-key').value = saved.api_key;
+    // Always load fresh server config first (shows current .env settings)
+    this._loadPresets().then(function() {
+      // Populate from server config as baseline
+      var info = this._config || {};
+      document.getElementById('settings-model').value = info.model || '';
+      document.getElementById('settings-base-url').value = info.base_url || '';
+
+      // Then overlay any saved local settings
+      var saved = this._loadStored();
+      if (saved.model) document.getElementById('settings-model').value = saved.model;
+      if (saved.base_url) document.getElementById('settings-base-url').value = saved.base_url;
+      if (saved.api_key) document.getElementById('settings-api-key').value = saved.api_key;
+
+      // Highlight the matching preset if it matches
+      var currentBase = document.getElementById('settings-base-url').value.trim();
+      document.querySelectorAll('#preset-grid .preset-card').forEach(function(c){
+        // Mark the card if its base_url was the one selected last time
+        // (not exact match to allow for trailing slashes)
+        var preset = (this._config.presets||[]).find(function(p){return p.id===c.dataset.id});
+        if (preset && preset.base_url===currentBase) c.classList.add('selected');
+      }.bind(this));
+    }.bind(this));
 
     document.getElementById('settings-modal').classList.add('open');
   };

@@ -33,7 +33,7 @@ except ImportError:
 
 API_KEY = os.getenv("LLM_API_KEY", "")
 BASE_URL = os.getenv("LLM_BASE_URL", "https://api.deepseek.com")
-MODEL = os.getenv("LLM_MODEL", "deepseek-chat")
+MODEL = os.getenv("LLM_MODEL", "deepseek-v4-pro")
 
 # ────────────────────────── 预设模型列表 ──────────────────────────
 # 前端设置面板也会有一份，这里提供给后端 /api/presets 使用
@@ -43,8 +43,8 @@ PRESETS = [
         "id": "deepseek",
         "name": "DeepSeek",
         "base_url": "https://api.deepseek.com",
-        "models": ["deepseek-chat", "deepseek-reasoner"],
-        "description": "国产高性价比模型，适合科研分析",
+        "models": ["deepseek-v4-pro", "deepseek-v4-flash"],
+        "description": "V4 系列旗舰模型，支持思考/非思考模式",
     },
     {
         "id": "openai",
