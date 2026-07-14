@@ -6,6 +6,7 @@
 from .orchestrator import Orchestrator, run_task
 from .registry import ModuleRegistry, default_registry, load_builtin_modules
 from .state import ModuleResult, TaskState, TaskStatus
+from .llm import chat, get_config_info
 
 __all__ = [
     "Orchestrator",
@@ -16,4 +17,6 @@ __all__ = [
     "ModuleResult",
     "TaskState",
     "TaskStatus",
+    "chat",
+    "get_config_info",
 ]

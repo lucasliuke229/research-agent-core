@@ -8,5 +8,12 @@
 fastapi>=0.115.0
 uvicorn>=0.30.0
 
+# --- Web 终端 ---
+websockets>=13.0
+
+# --- LLM（API 调用）---
+openai>=1.50.0
+python-dotenv>=1.0.0
+
 # --- 数据库（计划中，暂未启用）---
 # sqlite3 是 Python 标准库，无需安装
